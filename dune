@@ -1,5 +1,5 @@
 (executable
      (name fah_status)
      (public_name fah-status)
-       (libraries lambda-term))       
+     (libraries lambda-term netclient yojson))
 
