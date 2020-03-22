@@ -8,7 +8,7 @@ open Netchannels
 (** Default TCP port *)
 val tcp_port : int
 
-exception Protocol_error
+exception Protocol_error of string
 
 (** The class [client] implements the FAH client protocol. Client objects
  * are created by

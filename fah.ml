@@ -7,7 +7,7 @@ end
 let () =
   Netlog.Debug.register_module "Fah" Debug.enable
 
-exception Protocol_error
+exception Protocol_error of string
 
 let tcp_port = 36330
 
@@ -25,9 +25,9 @@ let read_until ic p =
   let rec loop acc =
     let line = ic # input_line () in
     let len = String.length line in
-    if len = 0 then raise Protocol_error
-    else
-      if p line then acc else loop acc^line
+    if len = 0 then raise (Protocol_error "end of stream")
+    else if p line then acc
+    else loop (acc^line)
   in loop ""
 
 let startswith prefix s =
@@ -41,7 +41,8 @@ let read_PyOn ic =
   let j = read_until ic ((=) "---") in
   try
     Yojson.Basic.from_string j
-  with _ -> raise Protocol_error
+  with _ ->
+    raise (Protocol_error ("error parsing PyOn: " ^ j))
 
 class client
   (ic0 : in_obj_channel)
@@ -59,7 +60,7 @@ object
     send_command oc "configured" ;
     match read_PyOn ic with
     | `Bool x -> x
-    | _ -> raise Protocol_error
+    | _ -> raise (Protocol_error "unexpected JSON")
 
   (* 'info' command *)
   method info () =
@@ -71,7 +72,7 @@ object
     send_command oc "num-slots" ;
     match read_PyOn ic with
     | `Int x -> x
-    | _ -> raise Protocol_error
+    | _ -> raise (Protocol_error "unexpected JSON")
 
   (* 'slot-info' command *)
   method slot_info () =
