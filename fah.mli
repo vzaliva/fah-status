@@ -8,14 +8,7 @@ open Netchannels
 (** Default TCP port *)
 val tcp_port : int
 
-type state =
-  [ `Authorization
-  | `Connected
-  ]
-
 exception Protocol_error
-exception Authentication_error
-exception Bad_state
 
 (** The class [client] implements the FAH client protocol. Client objects
  * are created by
@@ -32,13 +25,13 @@ object
 
   method is_configured: unit -> bool
 
-  method info : unit -> Yojson.t
+  method info : unit -> Yojson.Basic.t
 
   method num_slots: unit -> int
 
-  method slot_info : unit -> Yojson.t
+  method slot_info : unit -> Yojson.Basic.t
 
-  method queue_info : unit -> Yojson.t
+  method queue_info : unit -> Yojson.Basic.t
 
   (** Closes the file descriptors *)
   method close : unit -> unit
@@ -62,26 +55,7 @@ end
 class connect : ?proxy:#Uq_engines.client_endpoint_connector ->
                 Uq_engines.connect_address ->
                 float ->
-                  client
-
-
-(** Authenticates the session:
-
-Options:
-
-  - [user]: the user name to authenticate as
-  - [pass]: the password
-
-{[
-Fah.authenticate
-  ~user:"tom"
-  ~pass:"secret"
-  client
-]}
- *)
-val authenticate : ?user:string ->
-                   ?pass:string ->
-                   client -> unit
+                client
 
 (** {1 Debugging} *)
 
