@@ -14,9 +14,10 @@ build: [
 ]
 depends: [
   "dune" {>= "2.0"}
+  "lwt"
+  "lwt_ppx"
+  "lambda-term"
   "ocamlnet"
   "yojson"
-  "ocaml"
-  "lambda-term"
   "ppx_deriving"
 ]

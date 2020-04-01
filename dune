@@ -1,5 +1,7 @@
 (executable
      (name fah_status)
      (public_name fah-status)
-     (libraries lambda-term netclient yojson))
+     (libraries lwt.unix lambda-term netclient yojson)
+     (preprocess
+       (pps lwt_ppx)))
 
