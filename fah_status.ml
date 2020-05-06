@@ -4,6 +4,7 @@ open LTerm_style
 open LTerm_key
 
 let jempty = Yojson.Basic.from_string "[]"
+
 let state = ref jempty
 
 let draw ui matrix state =
@@ -61,16 +62,25 @@ let dump () =
     `Socket(`Sock_inet_byname(Unix.SOCK_STREAM, "localhost", 36330),
             Uq_client.default_connect_options) in
   let c = new Fah.connect addr 60.0 in
+  let nslots = c # num_slots () in
   print_endline "=======================";
-  print_endline (Yojson.Basic.to_string (c # info ())) ;
+  print_endline ("Configured: " ^ string_of_bool (c # is_configured ())) ;
+  print_endline ("Slots " ^ string_of_int nslots) ;
   print_endline "=======================";
-  print_endline (string_of_int (c # num_slots ())) ;
+  print_endline ("info: " ^ Yojson.Basic.to_string (c # info ())) ;
   print_endline "=======================";
-  print_endline (string_of_bool (c # is_configured ())) ;
-  print_endline "======================="
+  print_endline ("slot-info " ^ Yojson.Basic.to_string (c # slot_info ())) ;
+  print_endline "=======================";
+  print_endline ("queue-info " ^ Yojson.Basic.to_string (c # queue_info ())) ;
 
-let () = Lwt_main.run (main ())
+  for i = 0 to (nslots-1) do
+    print_endline "=======================";
+    print_endline ("simulation-info " ^ Yojson.Basic.to_string (c # simulation_info i)) ;
+    print_endline "=======================";
+  done
+
+let () = dump ()
 
 (*
-let () = dump ()
+let () = Lwt_main.run (main ())
  *)

@@ -89,6 +89,10 @@ object
     send_command oc "queue-info" ;
     read_PyOn ic
 
+  method simulation_info n =
+    send_command oc ("simulation-info " ^ (string_of_int n));
+    read_PyOn ic
+
 end
 
 class connect ?proxy addr timeout =

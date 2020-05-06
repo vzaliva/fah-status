@@ -33,6 +33,8 @@ object
 
   method queue_info : unit -> Yojson.Basic.t
 
+  method simulation_info : int -> Yojson.Basic.t
+
   (** Closes the file descriptors *)
   method close : unit -> unit
 end
