@@ -36,6 +36,11 @@ let startswith prefix s =
   if length s < l then false
   else sub s 0 l = prefix
 
+(* Read PyOn answer without JSON parsing *)
+let read_PyOn_raw ic =
+  ignore (read_until ic (startswith "PyON 1")) ;
+  read_until ic ((=) "---")
+
 let read_PyOn ic =
   ignore (read_until ic (startswith "PyON 1")) ;
   let j = read_until ic ((=) "---") in
@@ -43,6 +48,7 @@ let read_PyOn ic =
     Yojson.Basic.from_string j
   with _ ->
     raise (Protocol_error ("error parsing PyOn: " ^ j))
+
 
 class client
   (ic0 : in_obj_channel)
@@ -58,9 +64,8 @@ object
   (* 'configured' command *)
   method is_configured () =
     send_command oc "configured" ;
-    match read_PyOn ic with
-    | `Bool x -> x
-    | _ -> raise (Protocol_error "unexpected JSON")
+    (* This is a workaround since PyON returns "True" instead of JSON's "true" *)
+    read_PyOn_raw ic = "True"
 
   (* 'info' command *)
   method info () =
