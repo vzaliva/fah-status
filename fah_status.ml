@@ -32,10 +32,14 @@ let rec loop c ui event_thread tick_thread =
      return ()
   | LTick ->
      state :=
-       if (c # is_configured ()) then
-         c # info ()
-       else
-         jempty ;
+       (try
+          (if (c # is_configured ()) then
+             c # info ()
+           else
+             jempty)
+        with
+        | _ -> jempty)
+       ;
      loop c ui event_thread (wait_for_tick ())
   | _ ->
      loop c ui (wait_for_event ui) tick_thread
