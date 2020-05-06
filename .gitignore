@@ -30,4 +30,4 @@ _opam/
 
 # working files
 m.sh
-sample_output.txt
+*.txt
