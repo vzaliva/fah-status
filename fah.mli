@@ -23,16 +23,24 @@ object
 
   (* General Commands *)
 
+  (* Check if the client has set a user, team or passkey *)
   method is_configured: unit -> bool
 
+  (* Get application information *)
   method info : unit -> Yojson.Basic.t
 
+  (* Get number of slots *)
   method num_slots: unit -> int
+
+  (* Get current total estimated Points Per Day *)
+  method ppd: unit -> int
 
   method slot_info : unit -> Yojson.Basic.t
 
+  (* Get work unit queue information  *)
   method queue_info : unit -> Yojson.Basic.t
 
+  (* Get current simulation information for given slot *)
   method simulation_info : int -> Yojson.Basic.t
 
   (** Closes the file descriptors *)

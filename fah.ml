@@ -75,6 +75,13 @@ object
     | `Int x -> x
     | _ -> raise (Protocol_error "unexpected JSON")
 
+  (* 'ppd' command *)
+  method ppd () =
+    send_command oc "ppd" ;
+    match read_PyOn ic with
+    | `Int x -> x
+    | _ -> raise (Protocol_error "unexpected JSON")
+
   (* 'slot-info' command *)
   method slot_info () =
     send_command oc "slot-info" ;
