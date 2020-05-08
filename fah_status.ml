@@ -3,12 +3,28 @@ open LTerm_text
 open LTerm_style
 open LTerm_key
 
-let jempty = Yojson.Basic.from_string "[]"
+type slot_info =
+  | Ready of
+    {
+      description:string (* from slot-info *)
+    }
+  | Running of
+      {
+        description:string; (* from slot-info *)
+        idle:bool; (* from slot-info *)
+        progress: float; (* 0..1. from simulation-info *)
+        eta:int (* seconds. from simulation-info *)
+      }
 
 type cstate = 
   | Connecting
   | NotConfigured
-  | Connected of Yojson.Basic.t
+  | Configured of
+      {
+        user:string; (* simulation-info *)
+        team:int; (* simulation-info *)
+        slots: slot_info list;
+      }
 
 let state = ref Connecting
 
@@ -23,7 +39,7 @@ let draw ui matrix state =
      LTerm_draw.draw_styled ctx 1 0 (eval [B_fg red   ; S"Disconnected" ; E_fg])
   | NotConfigured ->
      LTerm_draw.draw_styled ctx 1 0 (eval [B_fg red   ; S"Not Configured" ; E_fg])
-  | Connected _ ->
+  | Configured _ ->
      LTerm_draw.draw_styled ctx 1 0 (eval [B_fg green ; S"Connected"    ; E_fg])
 
 (* in seconds *)
@@ -32,6 +48,28 @@ let update_period = 1.0
 type event_or_tick = LEvent of LTerm_event.t | LTick
 let wait_for_event ui = LTerm_ui.wait ui >>= fun x -> return (LEvent x)
 let wait_for_tick () = Lwt_unix.sleep update_period >>= fun () -> return (LTick)
+
+let get_slot_info slots n =
+  let open Yojson.Basic.Util in
+  let s = index n slots in
+  (* let status = s |> member "status" |> to_string in *)
+  let description = s |> member "description" |> to_string in
+  Ready {description=description}
+
+let get_cstate (c:Fah.client) =
+  let open Yojson.Basic.Util in
+  let n = (c # num_slots ()) in
+  if (c # is_configured () && n > 0) then
+    (* pick up user and team from slot 0 assuming it is the same
+       for all slots *)
+    let s0 = c # simulation_info 0 in
+    let user = s0 |> member "user" |> to_string in
+    let team = s0 |> member "team" |> to_int in
+    let slots = c # slot_info () in
+    let ls = List.init n (get_slot_info slots) in
+    Configured {user=user; team=team; slots=ls}
+  else
+    NotConfigured
 
 let rec loop host port c ui event_thread tick_thread =
   Lwt.choose [ event_thread; tick_thread ] >>= fun e ->
@@ -61,12 +99,8 @@ let rec loop host port c ui event_thread tick_thread =
        | Some c ->
           begin
             try
-              if (c # is_configured ()) then
-                (state := Connected (c # info ());
-                 loop host port (Some c) ui event_thread (wait_for_tick ()))
-              else
-                (state := NotConfigured;
-                 loop host port (Some c) ui event_thread (wait_for_tick ()))
+              state := get_cstate c ;
+              loop host port (Some c) ui event_thread (wait_for_tick ())
             with
             | _ ->
                c # close () ;
