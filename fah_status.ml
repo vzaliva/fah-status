@@ -24,7 +24,7 @@ type cstate =
   | Configured of
       {
         user:string; (* simulation-info *)
-        team:int; (* simulation-info *)
+        team:string; (* simulation-info *)
         slots: slot_info list;
       }
 
@@ -52,12 +52,21 @@ type event_or_tick = LEvent of LTerm_event.t | LTick
 let wait_for_event ui = LTerm_ui.wait ui >>= fun x -> return (LEvent x)
 let wait_for_tick () = Lwt_unix.sleep update_period >>= fun () -> return (LTick)
 
-let get_slot_info slots n =
+let get_slot_info c  slots n =
   let open Yojson.Basic.Util in
   let s = index n slots in
-  (* let status = s |> member "status" |> to_string in *)
   let description = s |> member "description" |> to_string in
-  Ready {description=description}
+  let status = s |> member "status" |> to_string in
+  if status = "READY" then
+    let si = c # simulation_info n in
+    Running {
+        description = description ;
+        idle = s |> member "idle" |> to_bool ;
+        progress = si |> member "progress" |> to_float ;
+        eta = si |> member "eta" |> to_int
+      }
+  else
+    Ready {description=description}
 
 let get_cstate (c:Fah.client) =
   let open Yojson.Basic.Util in
@@ -67,9 +76,9 @@ let get_cstate (c:Fah.client) =
        for all slots *)
     let s0 = c # simulation_info 0 in
     let user = s0 |> member "user" |> to_string in
-    let team = int_of_string (s0 |> member "team" |> to_string) in
+    let team = s0 |> member "team" |> to_string in
     let slots = c # slot_info () in
-    let ls = List.init n (get_slot_info slots) in
+    let ls = List.init n (get_slot_info c slots) in
     Configured {user=user; team=team; slots=ls}
   else
     NotConfigured
@@ -80,7 +89,7 @@ let rec loop host port c ui event_thread tick_thread =
   match e with
   | LEvent (LTerm_event.Key {code = Escape; _}) ->
      begin
-       (* TODO: maybe close connection here *)
+       (* TODO: maybe try to close connection here *)
        return ()
      end
   | LTick ->
@@ -89,7 +98,6 @@ let rec loop host port c ui event_thread tick_thread =
        | None ->
           begin
             try
-              (* TODO: check for socket leak *)
               let addr =
                 `Socket(`Sock_inet_byname(Unix.SOCK_STREAM, host, port),
                         Uq_client.default_connect_options) in
