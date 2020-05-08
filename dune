@@ -4,6 +4,6 @@
      (name fah_status)
      (public_name fah-status)
      (flags (-safe-string))
-     (libraries lwt.unix lambda-term netclient yojson)
+     (libraries lwt.unix lambda-term netclient yojson core)
      (preprocess (pps lwt_ppx)))
 

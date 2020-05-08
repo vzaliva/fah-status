@@ -7,4 +7,4 @@ Using the following API: https://github.com/FoldingAtHome/fah-control/wiki/3rd-p
 
 Manual build dependencis:
 
- `opam install dune lwt lwt_ppx yojson lambda-term ocamlnet ppx_deriving`
+ `opam install dune lwt lwt_ppx yojson lambda-term ocamlnet ppx_deriving core`

@@ -3,6 +3,8 @@ open LTerm_text
 open LTerm_style
 open LTerm_key
 
+open Core
+
 type slot_info =
   | Ready of
     {
@@ -32,7 +34,8 @@ let draw ui matrix state =
   let size = LTerm_ui.size ui in
   let ctx = LTerm_draw.context matrix size in
   LTerm_draw.clear ctx;
-  let ts = Float.to_string (Unix.time ()) in
+  let open Core.Unix in
+  let ts = strftime (localtime (time ())) "%F %T" in
   LTerm_draw.draw_styled ctx 0 0 (eval [B_fg yellow ; S ts ; E_fg]);
   match state with
   | Connecting ->
@@ -64,7 +67,7 @@ let get_cstate (c:Fah.client) =
        for all slots *)
     let s0 = c # simulation_info 0 in
     let user = s0 |> member "user" |> to_string in
-    let team = s0 |> member "team" |> to_int in
+    let team = int_of_string (s0 |> member "team" |> to_string) in
     let slots = c # slot_info () in
     let ls = List.init n (get_slot_info slots) in
     Configured {user=user; team=team; slots=ls}
@@ -102,7 +105,8 @@ let rec loop host port c ui event_thread tick_thread =
               state := get_cstate c ;
               loop host port (Some c) ui event_thread (wait_for_tick ())
             with
-            | _ ->
+            | e ->
+               Printf.eprintf "there was an error: %s\n" (Exn.to_string e);
                c # close () ;
                state := Connecting;
                loop host port None ui event_thread (wait_for_tick ())
