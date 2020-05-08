@@ -89,8 +89,10 @@ let rec loop host port c ui event_thread tick_thread =
   match e with
   | LEvent (LTerm_event.Key {code = Escape; _}) ->
      begin
-       (* TODO: maybe try to close connection here *)
-       return ()
+       (match c with
+        | Some c ->  c # close ()
+        | None -> ())
+     ; return ()
      end
   | LTick ->
      begin
