@@ -36,14 +36,23 @@ let draw ui matrix state =
   LTerm_draw.clear ctx;
   let open Core.Unix in
   let ts = strftime (localtime (time ())) "%F %T" in
-  LTerm_draw.draw_styled ctx 0 0 (eval [B_fg yellow ; S ts ; E_fg]);
+  LTerm_draw.draw_styled ctx 0 0 (eval [B_bg cyan; B_fg black; S ts ;E_bg;E_fg]);
+  let tpos = 20 in
   match state with
   | Connecting ->
-     LTerm_draw.draw_styled ctx 1 0 (eval [B_fg red   ; S"Disconnected" ; E_fg])
+     LTerm_draw.draw_styled ctx 0 tpos (eval [B_fg red; S"Disconnected" ; E_fg])
   | NotConfigured ->
-     LTerm_draw.draw_styled ctx 1 0 (eval [B_fg red   ; S"Not Configured" ; E_fg])
-  | Configured _ ->
-     LTerm_draw.draw_styled ctx 1 0 (eval [B_fg green ; S"Connected"    ; E_fg])
+     LTerm_draw.draw_styled ctx 0 tpos (eval [B_fg red; S"Not Configured" ; E_fg])
+  | Configured {user=user; team=team; slots=slots} ->
+     LTerm_draw.draw_styled ctx 0 tpos
+       (eval [
+            B_fg green ; S"Connected"      ; E_fg ;
+            B_fg lyellow ; S" User:" ; E_fg ;
+            B_fg yellow ; S user ; E_fg ;
+            B_fg lyellow ; S" Team:" ; E_fg ;
+            B_fg yellow ; S team ; E_fg
+       ])
+
 
 (* in seconds *)
 let update_period = 1.0
