@@ -30,6 +30,33 @@ type cstate =
 
 let state = ref Connecting
 
+let show_slots ctx (slots: slot_info list) =
+  let rec loop i (slots: slot_info list) =
+    match slots with
+    | [] -> ()
+    | s::slots ->
+       let y = 3 in
+       match s with
+       | Ready {description} ->
+          LTerm_draw.draw_styled ctx (i+y) 0
+            (eval [
+                 B_fg lyellow ; S"Slot #"      ; E_fg ;
+                 B_fg yellow ; S(string_of_int (i+1) ^ " "); E_fg;
+                 B_fg white ; S(description) ; E_fg;
+                 B_fg white ; S" Ready" ; E_fg;
+            ])
+       | Running {description;idle;progress;eta} ->
+          LTerm_draw.draw_styled ctx (i+y) 0
+            (eval [
+                 B_fg lyellow ; S"Slot #"      ; E_fg ;
+                 B_fg yellow ; S(string_of_int (i+1) ^ " "); E_fg;
+                 B_fg white ; S(description) ; E_fg;
+                 B_fg white ; S" Running" ; E_fg;
+            ])
+
+  in
+  loop 0 slots
+
 let draw ui matrix state =
   let size = LTerm_ui.size ui in
   let ctx = LTerm_draw.context matrix size in
@@ -51,7 +78,8 @@ let draw ui matrix state =
             B_fg yellow ; S user ; E_fg ;
             B_fg lyellow ; S" Team:" ; E_fg ;
             B_fg yellow ; S team ; E_fg
-       ])
+       ]);
+     show_slots ctx slots
 
 
 (* in seconds *)
@@ -66,7 +94,7 @@ let get_slot_info c  slots n =
   let s = index n slots in
   let description = s |> member "description" |> to_string in
   let status = s |> member "status" |> to_string in
-  if status = "READY" then
+  if status = "RUNNING" then
     let si = c # simulation_info n in
     Running {
         description = description ;
