@@ -1,9 +1,14 @@
 (ocamllex pyon)
 
+(env
+    (dev
+        (flags (:standard -safe-string -annot -w -27-32-34-39)))
+    (release
+        (flags (:standard -O3 -safe-string -w -27-32-34-39))))
+
 (executable
      (name fah_status)
      (public_name fah-status)
-     (flags (-safe-string))
-     (libraries lwt.unix lambda-term netclient yojson core)
+     (libraries lwt.unix lambda-term netclient yojson zed core)
      (preprocess (pps lwt_ppx)))
 

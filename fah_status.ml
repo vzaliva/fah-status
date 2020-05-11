@@ -30,8 +30,8 @@ type cstate =
 
 let state = ref Connecting
 
-let show_slots ctx (slots: slot_info list) =
-  let rec loop i (slots: slot_info list) =
+let show_slots ctx (size:LTerm_geom.size) slots =
+  let rec loop i slots =
     match slots with
     | [] -> ()
     | s::slots ->
@@ -51,8 +51,29 @@ let show_slots ctx (slots: slot_info list) =
                  B_fg lyellow ; S"Slot #"      ; E_fg ;
                  B_fg yellow ; S(string_of_int (i+1) ^ " "); E_fg;
                  B_fg white ; S(description) ; E_fg;
-                 B_fg white ; S" Running" ; E_fg;
-            ])
+                 B_fg white ; S" Running:" ; E_fg;
+            ]);
+          let pl = int_of_float (progress *. float_of_int size.cols) in
+          let pr = size.cols - pl in
+          let py = i+y+1 in
+          let lc = LTerm_draw.sub ctx { row1 = py; col1 = 0; row2 = py+1; col2 = pl } in
+          let rc = LTerm_draw.sub ctx { row1 = py; col1 = pl; row2 = py+1; col2 = pl+pr } in
+          let pls = {
+              bold       = Some false;
+              underline  = None;
+              blink      = Some false;
+              reverse    = Some true;
+              foreground = Some white;
+              background = Some black;
+            } in
+          let prs = {pls with reverse = Some false} in
+          LTerm_draw.fill lc ?style:(Some pls) (Zed_char.unsafe_of_char ' ');
+          LTerm_draw.fill rc ?style:(Some prs) (Zed_char.unsafe_of_char ' ');
+          let percent = Printf.sprintf "%.2f" (progress *. 100.) in
+          LTerm_draw.draw_styled ctx (i+y+2) 0
+            (eval [
+                 B_fg yellow ; S(percent ^ "%"); E_fg;
+            ]);
 
   in
   loop 0 slots
@@ -79,7 +100,7 @@ let draw ui matrix state =
             B_fg lyellow ; S" Team:" ; E_fg ;
             B_fg yellow ; S team ; E_fg
        ]);
-     show_slots ctx slots
+     show_slots ctx size slots
 
 
 (* in seconds *)
@@ -115,7 +136,7 @@ let get_cstate (c:Fah.client) =
     let user = s0 |> member "user" |> to_string in
     let team = s0 |> member "team" |> to_string in
     let slots = c # slot_info () in
-    let ls = List.init n (get_slot_info c slots) in
+    let ls = List.init n ~f:(get_slot_info c slots) in
     Configured {user=user; team=team; slots=ls}
   else
     NotConfigured
