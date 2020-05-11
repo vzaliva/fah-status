@@ -15,7 +15,7 @@ type slot_info =
         description:string; (* from slot-info *)
         idle:bool; (* from slot-info *)
         progress: float; (* 0..1. from simulation-info *)
-        eta:int (* seconds. from simulation-info *)
+        eta:string
       }
 
 type cstate = 
@@ -43,7 +43,7 @@ let show_slots ctx (size:LTerm_geom.size) slots =
                  B_fg lyellow ; S"Slot #"      ; E_fg ;
                  B_fg yellow ; S(string_of_int (i+1) ^ " "); E_fg;
                  B_fg white ; S(description) ; E_fg;
-                 B_fg white ; S" Ready" ; E_fg;
+                 B_fg yellow ; S" Ready" ; E_fg;
             ])
        | Running {description;idle;progress;eta} ->
           LTerm_draw.draw_styled ctx (i+y) 0
@@ -51,7 +51,7 @@ let show_slots ctx (size:LTerm_geom.size) slots =
                  B_fg lyellow ; S"Slot #"      ; E_fg ;
                  B_fg yellow ; S(string_of_int (i+1) ^ " "); E_fg;
                  B_fg white ; S(description) ; E_fg;
-                 B_fg white ; S" Running:" ; E_fg;
+                 B_fg yellow ; S" Running:" ; E_fg;
             ]);
           let pl = int_of_float (progress *. float_of_int size.cols) in
           let pr = size.cols - pl in
@@ -72,8 +72,14 @@ let show_slots ctx (size:LTerm_geom.size) slots =
           let percent = Printf.sprintf "%.2f" (progress *. 100.) in
           LTerm_draw.draw_styled ctx (i+y+2) 0
             (eval [
-                 B_fg yellow ; S(percent ^ "%"); E_fg;
+                 B_fg lyellow ; S"Progress: " ; E_fg ;
+                 B_fg white ; S(percent ^ "%"); E_fg;
             ]);
+          LTerm_draw.draw_styled ctx (i+y+3) 0
+            (eval [
+                 B_fg lyellow ; S"ETA: " ; E_fg ;
+                 B_fg white ; S(eta); E_fg;
+            ])
 
   in
   loop 0 slots
@@ -110,18 +116,19 @@ type event_or_tick = LEvent of LTerm_event.t | LTick
 let wait_for_event ui = LTerm_ui.wait ui >>= fun x -> return (LEvent x)
 let wait_for_tick () = Lwt_unix.sleep update_period >>= fun () -> return (LTick)
 
-let get_slot_info c  slots n =
+let get_slot_info c slots n =
   let open Yojson.Basic.Util in
   let s = index n slots in
   let description = s |> member "description" |> to_string in
   let status = s |> member "status" |> to_string in
   if status = "RUNNING" then
     let si = c # simulation_info n in
+    let qi = c # queue_info () in
     Running {
         description = description ;
         idle = s |> member "idle" |> to_bool ;
         progress = si |> member "progress" |> to_float ;
-        eta = si |> member "eta" |> to_int
+        eta = qi |> index n |> member "eta" |> to_string
       }
   else
     Ready {description=description}
