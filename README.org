@@ -11,6 +11,19 @@ Folding@Home text-mode status monitor
    Compile:
    =dune build=
 
+
+* Configuration
+  Currently user authentication is not supported. By default,
+  Folding@Home client allows to connect from localhost, so you should
+  be able to connect if you run from the same machine.
+
+  To connect from other computer, use ~FAHControl~ application and
+  proceed to /Configure/ -> /RemoteAccess/ and under /"Passwordless IP
+  Address Restriction"/ *and* /"IP Address Restriction"/ add an IP or
+  subnet allowed to access. For example, if you LAN subnet is
+  10.0.1.0/24, set both /"Allow"/ fields to "127.0.0.1 10.0.1.0/24". You
+  need to restart your FAH client for settings to take an effect.
+
 * Usage
   =fah_status [-h host] [-p port]=
 
@@ -19,3 +32,4 @@ Folding@Home text-mode status monitor
   - [[https://foldingathome.org/][Folding@Home Project]]
   - [[https://github.com/FoldingAtHome/fah-control/wiki/3rd-party-FAHClient-API][FAH client API]]
   - Author: Vadim Zaliva lord@crocodile.org
+
