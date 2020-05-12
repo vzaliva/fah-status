@@ -5,6 +5,8 @@ open LTerm_key
 
 open Core
 
+let version="1.0"
+
 type slot_info =
   | Ready of
       {
@@ -101,8 +103,10 @@ let draw ui matrix state =
   | Configured {user=user; team=team; slots=slots} ->
      LTerm_draw.draw_styled ctx 0 tpos
        (eval [
-            B_fg green ; S"Connected"      ; E_fg ;
-            B_fg lyellow ; S" User:" ; E_fg ;
+            B_fg green ; S"Connected"      ; E_fg ]);
+     LTerm_draw.draw_styled ctx 1 0
+       (eval [
+            B_fg lyellow ; S"User:" ; E_fg ;
             B_fg yellow ; S user ; E_fg ;
             B_fg lyellow ; S" Team:" ; E_fg ;
             B_fg yellow ; S team ; E_fg
@@ -197,12 +201,23 @@ let rec loop host port c ui event_thread tick_thread =
   | _ ->
      loop host port c ui (wait_for_event ui) tick_thread
 
-let main () =
+let main host port =
   let term = Lwt_main.run (Lazy.force LTerm.stdout) in
   let ui = Lwt_main.run (LTerm_ui.create term
                            (fun matrix size -> draw matrix size !state)) in
-  (loop "localhost" 36330 None ui (wait_for_event ui) (wait_for_tick ()))
+  (loop host port None ui (wait_for_event ui) (wait_for_tick ()))
     [%lwt.finally LTerm_ui.quit ui]
 
-let () = Lwt_main.run (main ())
+let command =
+  let open Command.Let_syntax in
+  Command.basic ~summary:"Folding@Home Status Monitor"
+    [%map_open
+     let host = flag "-s" (optional_with_default "localhost" string)
+                  ~doc:"host name or IP"
+     and port = flag "-p" (optional_with_default 36330 int)
+                  ~doc:"port number" in
+         fun () -> Lwt_main.run (main host port)
+    ]
 
+let () =
+  Command.run ~version:version ~build_info:"git" command
