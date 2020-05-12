@@ -87,7 +87,7 @@ let show_slots ctx (size:LTerm_geom.size) slots =
   in
   loop 0 slots
 
-let draw ui matrix state =
+let draw host port state ui matrix =
   let size = LTerm_ui.size ui in
   let ctx = LTerm_draw.context matrix size in
   LTerm_draw.clear ctx;
@@ -95,15 +95,15 @@ let draw ui matrix state =
   let ts = strftime (localtime (time ())) "%F %T" in
   LTerm_draw.draw_styled ctx 0 0 (eval [B_bg cyan; B_fg black; S ts ;E_bg;E_fg]);
   let tpos = 20 in
+  let hp = [B_fg lblack ; S(host^":"^(string_of_int port)) ; E_fg ] in
   match state with
   | Connecting ->
-     LTerm_draw.draw_styled ctx 0 tpos (eval [B_fg red; S"Disconnected" ; E_fg])
+     LTerm_draw.draw_styled ctx 0 tpos (eval ([B_fg red; S"Disconnected: " ; E_fg] @ hp))
   | NotConfigured ->
-     LTerm_draw.draw_styled ctx 0 tpos (eval [B_fg red; S"Not Configured" ; E_fg])
+     LTerm_draw.draw_styled ctx 0 tpos (eval ([B_fg red; S"Not Configured: " ; E_fg] @ hp))
   | Configured {user=user; team=team; slots=slots} ->
      LTerm_draw.draw_styled ctx 0 tpos
-       (eval [
-            B_fg green ; S"Connected"      ; E_fg ]);
+       (eval ([B_fg green ; S"Connected:" ; E_fg ] @ hp));
      LTerm_draw.draw_styled ctx 1 0
        (eval [
             B_fg lyellow ; S"User:" ; E_fg ;
@@ -115,9 +115,7 @@ let draw ui matrix state =
      show_slots sctx size slots;
      let legend = "[ESC to exit]" in
      LTerm_draw.draw_styled ctx (size.rows-1) (size.cols - String.length legend)
-       (eval [
-            B_fg lblack ; S(legend) ; E_fg ;
-       ])
+       (eval [B_fg lblack ; S(legend) ; E_fg])
 
 
 (* in seconds *)
@@ -204,7 +202,8 @@ let rec loop host port c ui event_thread tick_thread =
 let main host port =
   let term = Lwt_main.run (Lazy.force LTerm.stdout) in
   let ui = Lwt_main.run (LTerm_ui.create term
-                           (fun matrix size -> draw matrix size !state)) in
+                           (fun m s -> draw host port !state m s)
+             ) in
   (loop host port None ui (wait_for_event ui) (wait_for_tick ()))
     [%lwt.finally LTerm_ui.quit ui]
 

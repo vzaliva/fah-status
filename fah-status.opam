@@ -15,10 +15,12 @@ build: [
 depends: [
   "dune" {>= "2.0"}
   "core"
+  "zed"
   "lwt"
   "lwt_ppx"
   "lambda-term"
   "ocamlnet"
   "yojson"
   "ppx_deriving"
+  "ppx_jane"
 ]
