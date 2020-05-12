@@ -211,7 +211,7 @@ let command =
   let open Command.Let_syntax in
   Command.basic ~summary:"Folding@Home Status Monitor"
     [%map_open
-     let host = flag "-s" (optional_with_default "localhost" string)
+     let host = flag "-h" (optional_with_default "localhost" string)
                   ~doc:"host name or IP"
      and port = flag "-p" (optional_with_default 36330 int)
                   ~doc:"port number" in

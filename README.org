@@ -1,0 +1,21 @@
+Folding@Home text-mode status monitor
+
+* Installation
+** As OPAM package
+   =opam install fat-status=
+   
+** Manual
+   Manual build dependencis:
+   =opam install dune zed lwt lwt_ppx yojson lambda-term ocamlnet ppx_let ppx_jane core=
+
+   Compile:
+   =dune build=
+
+* Usage
+  =fah_status [-h host] [-p port]=
+
+  The UI will update automatically. Press *ESC* key to exit.
+* Links
+  - [[https://foldingathome.org/][Folding@Home Project]]
+  - [[https://github.com/FoldingAtHome/fah-control/wiki/3rd-party-FAHClient-API][FAH client API]]
+  - Author: Vadim Zaliva lord@crocodile.org
