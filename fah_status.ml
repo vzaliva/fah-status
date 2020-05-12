@@ -35,7 +35,7 @@ let show_slots ctx (size:LTerm_geom.size) slots =
     match slots with
     | [] -> ()
     | s::slots ->
-       let y = 3 in
+       let y = 5*i in
        match s with
        | Ready {description} ->
           LTerm_draw.draw_styled ctx (i+y) 0
@@ -46,12 +46,13 @@ let show_slots ctx (size:LTerm_geom.size) slots =
                  B_fg yellow ; S" Ready" ; E_fg;
             ])
        | Running {description;idle;progress;eta} ->
+          let is = if idle then " (idle)" else "" in
           LTerm_draw.draw_styled ctx (i+y) 0
             (eval [
                  B_fg lyellow ; S"Slot #"      ; E_fg ;
                  B_fg yellow ; S(string_of_int (i+1) ^ " "); E_fg;
                  B_fg white ; S(description) ; E_fg;
-                 B_fg yellow ; S" Running:" ; E_fg;
+                 B_fg yellow ; S(" Running"^is^":") ; E_fg;
             ]);
           let pl = int_of_float (progress *. float_of_int size.cols) in
           let pr = size.cols - pl in
@@ -106,7 +107,13 @@ let draw ui matrix state =
             B_fg lyellow ; S" Team:" ; E_fg ;
             B_fg yellow ; S team ; E_fg
        ]);
-     show_slots ctx size slots
+     let sctx = LTerm_draw.sub ctx { row1 = 3; col1 = 0; row2 = size.rows-3; col2 = size.cols } in
+     show_slots sctx size slots;
+     let legend = "[ESC to exit]" in
+     LTerm_draw.draw_styled ctx (size.rows-1) (size.cols - String.length legend)
+       (eval [
+            B_fg lblack ; S(legend) ; E_fg ;
+       ])
 
 
 (* in seconds *)
