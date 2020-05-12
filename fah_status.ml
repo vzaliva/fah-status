@@ -7,9 +7,9 @@ open Core
 
 type slot_info =
   | Ready of
-    {
-      description:string (* from slot-info *)
-    }
+      {
+        description:string (* from slot-info *)
+      }
   | Running of
       {
         description:string; (* from slot-info *)
@@ -204,32 +204,5 @@ let main () =
   (loop "localhost" 36330 None ui (wait_for_event ui) (wait_for_tick ()))
     [%lwt.finally LTerm_ui.quit ui]
 
-(* debug dump *)
-let dump () =
-  let addr =
-    `Socket(`Sock_inet_byname(Unix.SOCK_STREAM, "localhost", 36330),
-            Uq_client.default_connect_options) in
-  let c = new Fah.connect addr 60.0 in
-  let nslots = c # num_slots () in
-  print_endline "=======================";
-  print_endline ("Configured: " ^ string_of_bool (c # is_configured ())) ;
-  print_endline ("Slots " ^ string_of_int nslots) ;
-  print_endline "=======================";
-  print_endline ("info: " ^ Yojson.Basic.to_string (c # info ())) ;
-  print_endline "=======================";
-  print_endline ("slot-info " ^ Yojson.Basic.to_string (c # slot_info ())) ;
-  print_endline "=======================";
-  print_endline ("queue-info " ^ Yojson.Basic.to_string (c # queue_info ())) ;
-
-  for i = 0 to (nslots-1) do
-    print_endline "=======================";
-    print_endline ("simulation-info " ^ Yojson.Basic.to_string (c # simulation_info i)) ;
-    print_endline "=======================";
-  done
-
-
 let () = Lwt_main.run (main ())
 
-(*
-let () = dump ()
- *)
