@@ -181,7 +181,9 @@ let rec loop host port c ui event_thread tick_thread =
               state := Connecting ;
               loop host port (Some c) ui event_thread (wait_for_tick ())
             with
-            | _ -> loop host port None ui event_thread (wait_for_tick ())
+            | e ->
+               Printf.eprintf "there was an error: %s\n" (Exn.to_string e);
+               loop host port None ui event_thread (wait_for_tick ())
           end
        | Some c ->
           begin
