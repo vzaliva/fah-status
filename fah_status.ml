@@ -103,12 +103,12 @@ let draw host port state ui matrix =
      LTerm_draw.draw_styled ctx 0 tpos (eval ([B_fg red; S"Not Configured: " ; E_fg] @ hp))
   | Configured {user=user; team=team; slots=slots} ->
      LTerm_draw.draw_styled ctx 0 tpos
-       (eval ([B_fg green ; S"Connected:" ; E_fg ] @ hp));
+       (eval ([B_fg green ; S"Connected: " ; E_fg ] @ hp));
      LTerm_draw.draw_styled ctx 1 0
        (eval [
-            B_fg lyellow ; S"User:" ; E_fg ;
+            B_fg lyellow ; S"User: " ; E_fg ;
             B_fg yellow ; S user ; E_fg ;
-            B_fg lyellow ; S" Team:" ; E_fg ;
+            B_fg lyellow ; S", Team: " ; E_fg ;
             B_fg yellow ; S team ; E_fg
        ]);
      let sctx = LTerm_draw.sub ctx { row1 = 3; col1 = 0; row2 = size.rows-3; col2 = size.cols } in
