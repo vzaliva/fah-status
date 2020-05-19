@@ -19,6 +19,7 @@ depends: [
   "lwt"
   "lwt_ppx"
   "lambda-term"
+  "conf-gnutls"
   "ocamlnet"
   "yojson"
   "ppx_deriving"

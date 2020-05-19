@@ -9,6 +9,6 @@
 (executable
      (name fah_status)
      (public_name fah-status)
-     (libraries lwt.unix lambda-term netclient yojson zed core)
+     (libraries lwt.unix lambda-term netclient nettls-gnutls yojson zed core)
      (preprocess (pps lwt_ppx ppx_let ppx_jane)))
 

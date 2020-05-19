@@ -20,13 +20,13 @@ type slot_info =
         eta:string
       }
 
-type cstate = 
+type cstate =
   | Connecting
   | NotConfigured
   | Configured of
       {
         user:string; (* simulation-info *)
-        team:string; (* simulation-info *)
+        team:int; (* simulation-info *)
         slots: slot_info list;
       }
 
@@ -87,6 +87,30 @@ let show_slots ctx (size:LTerm_geom.size) slots =
   in
   loop 0 slots
 
+let get_user_stats user team =
+  (* TODO: encode user *)
+  let url = "https://stats.foldingathome.org/api/donor/" ^ user in
+  try
+    let s = Nethttp_client.Convenience.http_get url in
+    let j = Yojson.Basic.from_string s in
+    try
+      let open Yojson.Basic.Util in
+      let teams = j |> member "teams" |> to_list in
+      match List.find teams ~f:(fun x -> (x |> member "team" |> to_int) = team) with
+      | None -> None
+      | Some x -> Some (x |> member "credit" |> to_int)
+    with e ->
+      Printf.eprintf "Error parsing donor stats: %s. JSON:\n%s" (Exn.to_string e) s;
+      None
+  with e ->
+    Printf.eprintf "Error fetching donor stats: %s\n" (Exn.to_string e);
+    None
+
+let show_user_stats (tctx:LTerm_draw.context) (user:string) (team:int) =
+  match get_user_stats user team with
+  | None -> ()
+  | Some _ -> ()
+
 let draw host port state ui matrix =
   let size = LTerm_ui.size ui in
   let ctx = LTerm_draw.context matrix size in
@@ -109,9 +133,11 @@ let draw host port state ui matrix =
             B_fg lyellow ; S"User: " ; E_fg ;
             B_fg yellow ; S user ; E_fg ;
             B_fg lyellow ; S", Team: " ; E_fg ;
-            B_fg yellow ; S team ; E_fg
+            B_fg yellow ; S (string_of_int team) ; E_fg
        ]);
-     let sctx = LTerm_draw.sub ctx { row1 = 3; col1 = 0; row2 = size.rows-3; col2 = size.cols } in
+     let tctx = LTerm_draw.sub ctx { row1 = 3; col1 = 0; row2 = 4; col2 = size.cols } in
+     show_user_stats tctx user team ;
+     let sctx = LTerm_draw.sub ctx { row1 = 4; col1 = 0; row2 = size.rows-4; col2 = size.cols } in
      show_slots sctx size slots;
      let legend = "[ESC to exit]" in
      LTerm_draw.draw_styled ctx (size.rows-1) (size.cols - String.length legend)
@@ -150,7 +176,8 @@ let get_cstate (c:Fah.client) =
        for all slots *)
     let s0 = c # simulation_info 0 in
     let user = s0 |> member "user" |> to_string in
-    let team = s0 |> member "team" |> to_string in
+    (* Team is returned as "string" while it is "int" *)
+    let team = int_of_string (s0 |> member "team" |> to_string) in
     let slots = c # slot_info () in
     let ls = List.init n ~f:(get_slot_info c slots) in
     Configured {user=user; team=team; slots=ls}
@@ -218,11 +245,12 @@ let command =
      and port = flag "-p" (optional_with_default 36330 int)
                   ~doc:"port number"
      and interval = flag "-i" (optional_with_default 1 int)
-                  ~doc:"update interval (seconds)" in
+                      ~doc:"update interval (seconds)" in
          fun () ->
          update_period := float_of_int interval;
          Lwt_main.run (main host port)
     ]
 
 let () =
+  Nettls_gnutls.init() ;
   Command.run ~version:version ~build_info:"git" command
