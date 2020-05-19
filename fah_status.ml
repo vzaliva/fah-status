@@ -106,10 +106,14 @@ let get_user_stats user team =
     Printf.eprintf "Error fetching donor stats: %s\n" (Exn.to_string e);
     None
 
-let show_user_stats (tctx:LTerm_draw.context) (user:string) (team:int) =
+let show_user_stats tctx user team =
+  LTerm_draw.draw_styled tctx 0 0
+    (eval [B_fg lyellow ; S"Credits: " ; E_fg]);
   match get_user_stats user team with
-  | None -> ()
-  | Some _ -> ()
+  | None ->
+     LTerm_draw.draw_styled tctx 0 9 (eval [B_fg red ; S"Unknown" ; E_fg])
+  | Some c ->
+     LTerm_draw.draw_styled tctx 0 9 (eval [B_fg yellow ; S(string_of_int c) ; E_fg])
 
 let draw host port state ui matrix =
   let size = LTerm_ui.size ui in
@@ -135,7 +139,7 @@ let draw host port state ui matrix =
             B_fg lyellow ; S", Team: " ; E_fg ;
             B_fg yellow ; S (string_of_int team) ; E_fg
        ]);
-     let tctx = LTerm_draw.sub ctx { row1 = 3; col1 = 0; row2 = 4; col2 = size.cols } in
+     let tctx = LTerm_draw.sub ctx { row1 = 2; col1 = 0; row2 = 3; col2 = size.cols } in
      show_user_stats tctx user team ;
      let sctx = LTerm_draw.sub ctx { row1 = 4; col1 = 0; row2 = size.rows-4; col2 = size.cols } in
      show_slots sctx size slots;
