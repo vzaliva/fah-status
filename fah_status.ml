@@ -119,11 +119,11 @@ let draw host port state ui matrix =
 
 
 (* in seconds *)
-let update_period = 1.0
+let update_period = ref 1.0
 
 type event_or_tick = LEvent of LTerm_event.t | LTick
 let wait_for_event ui = LTerm_ui.wait ui >>= fun x -> return (LEvent x)
-let wait_for_tick () = Lwt_unix.sleep update_period >>= fun () -> return (LTick)
+let wait_for_tick () = Lwt_unix.sleep !update_period >>= fun () -> return (LTick)
 
 let get_slot_info c slots n =
   let open Yojson.Basic.Util in
@@ -216,8 +216,12 @@ let command =
      let host = flag "-h" (optional_with_default "localhost" string)
                   ~doc:"host name or IP"
      and port = flag "-p" (optional_with_default 36330 int)
-                  ~doc:"port number" in
-         fun () -> Lwt_main.run (main host port)
+                  ~doc:"port number"
+     and interval = flag "-i" (optional_with_default 1 int)
+                  ~doc:"update interval (seconds)" in
+         fun () ->
+         update_period := float_of_int interval;
+         Lwt_main.run (main host port)
     ]
 
 let () =

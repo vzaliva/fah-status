@@ -24,7 +24,7 @@ Folding@Home text-mode status monitor
   need to restart your FAH client for settings to take an effect.
 
 * Usage
-  =fah_status [-h host] [-p port]=
+  =fah_status [-h host] [-p port] [-i update_seconds]=
 
   Without parameters, conntects to ~localhost:36330~
 
